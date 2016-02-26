@@ -6,7 +6,7 @@ import re
 import sys
 
 depths_seen = []
-data_rows = []
+data_rows = [('date:time', 'Depth', 'Temperature')]
 
 def parse_date_and_time(row):
     datetime_regex = re.compile('\d{8}T\d{4}')
@@ -17,11 +17,10 @@ def parse_depth(row):
     depth_regex = re.compile('\d\d_CM')
     depth = depth_regex.search(row)
     if depth:
-        if depth.group() not in depths_seen:
-            depths_seen.append(depth.group())
-        return depth.group()
-    else:
-        return depth
+        depth = depth.group().replace('_CM', '.0')
+        if depth not in depths_seen:
+            depths_seen.append(depth)
+    return depth
 
 def parse_value(row):
     value_regex = re.compile(r'-?\d+\.\d+')
@@ -48,7 +47,15 @@ def pull_data(raw_file, out_file):
         data_row = parse_row(row)
         data_rows.append(data_row)
     for a_row in data_rows:
-        writer.writerow(a_row)
+        if not a_row[1]:
+            if len(depths_seen) is 1:
+                a_row = (a_row[0], depths_seen[0], a_row[2])
+            else:
+                print "Ambiguous depth for: {0} {1}\nThis row will not be " \
+                      "written to csv file.".format(a_row[0], a_row[2])
+                a_row = None
+        if a_row:
+            writer.writerow(a_row)
 
     ifile.close()
     ofile.close()
