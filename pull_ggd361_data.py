@@ -7,7 +7,7 @@ import re
 import sys
 
 depths_seen = []
-data_rows = [('Substation', 'date:time', 'Depth', 'Temperature')]
+data_rows = [('Station', 'date:time', 'Depth', 'Temperature')]
 
 def parse_substation_code(row):
     """ Extract substation code from data row. """
