@@ -14,7 +14,7 @@ def parse_date_and_time(row):
     return date_and_time.group()
 
 def parse_depth(row):
-    depth_regex = re.compile('\d\d_CM')
+    depth_regex = re.compile('\d+_CM')
     depth = depth_regex.search(row)
     if depth:
         depth = depth.group().replace('_CM', '.0')
