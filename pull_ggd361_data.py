@@ -59,14 +59,11 @@ def pull_data(raw_file, out_file):
 
     for a_row in data_rows:
         if not a_row[2]:
+            replacement_depth = -999.0
             if len(depths_seen) is 1:
-                a_row = (a_row[0], a_row[1], depths_seen[0], a_row[3])
-            else:
-                print "Ambiguous depth for: {0} {1} {2}\nThis row will not be " \
-                      "written to csv file.".format(a_row[0], a_row[1], a_row[3])
-                a_row = None
-        if a_row:
-            writer.writerow(a_row)
+                replacement_depth = depths_seen[0]
+            a_row = (a_row[0], a_row[1], replacement_depth, a_row[3])
+        writer.writerow(a_row)
 
     ifile.close()
     ofile.close()
