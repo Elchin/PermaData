@@ -14,13 +14,13 @@ def reformat_dates_to_gtnp(column_file, out_file, in_format):
     :param out_file: CSV filename for reformatted date/times
     :param in_format: python strptime format string of date/times in column_file
     """
-    date_time_writer = csv.writer(open(out_file, 'w'), quotechar="'")
-    with open(column_file, 'r') as csvfile:
+    date_time_writer = csv.writer(open(out_file, 'wb'), lineterminator='\n')
+    with open(column_file, 'rb') as csvfile:
         date_time_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         for row in date_time_reader:
             try:
                 date_time = dt.datetime.strptime(row[0].strip(), in_format)
-                quoted_dt = "\"{0}\"".format(date_time.strftime(gtnp_date_time_format))
+                quoted_dt = "{0}".format(date_time.strftime(gtnp_date_time_format))
                 date_time_writer.writerow([quoted_dt])
             except ValueError as error:
                 print error
