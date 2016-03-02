@@ -19,10 +19,11 @@ def reformat_dates_to_gtnp(column_file, out_file, in_format):
         date_time_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         for row in date_time_reader:
             try:
-                date_time = dt.datetime.strptime(row[0], in_format)
+                date_time = dt.datetime.strptime(row[0].strip(), in_format)
                 quoted_dt = "\"{0}\"".format(date_time.strftime(gtnp_date_time_format))
                 date_time_writer.writerow([quoted_dt])
-            except ValueError:
+            except ValueError as error:
+                print error
                 date_time_writer.writerow(row)
 
 def parse_arguments(argv):
