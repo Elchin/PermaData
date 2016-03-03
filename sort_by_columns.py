@@ -1,70 +1,111 @@
-""" Reformats a file of one column of date/times into GTN-P specific date/time format. """
+""" Does multi column sort of CSV file. """
 
+import ast
 import csv
 import datetime as dt
 import getopt
 import sys
 
 gtnp_date_time_format = '%Y-%m-%d %H:%M'
+date_time_index = None
 
-def reformat_dates_to_gtnp(column_file, out_file, in_format):
+def cast_to_datetime(dt_str):
+    date_time = None
+    try:
+        date_time = dt.datetime.strptime(dt_str.strip(), gtnp_date_time_format)
+    except ValueError as error:
+        print error
+    return date_time
+
+def cast_to_integer(int_str):
+    return int(float(int_str.strip()))
+
+def cast_to_real(real_str):
+    return float(real_str.strip())
+
+def create_typed_row(row, column_list):
+    row_list = list(row)
+    for index, type in column_list:
+        if type == 'dt':
+            date_time_index = index
+            row_list[index] = cast_to_datetime(row_list[index])
+        elif type == 'int':
+            row_list[index] = cast_to_integer(row_list[index])
+        elif type == 'real':
+            row_list[index] = cast_to_real(row_list[index])
+    return tuple(row_list)
+
+def sort_by_columns(in_file, out_file, column_list):
     """
     Reformat the date/times.
     :param column_file: file containing date/time column
     :param out_file: CSV filename for reformatted date/times
     :param in_format: python strptime format string of date/times in column_file
     """
-    date_time_writer = csv.writer(open(out_file, 'w'), quotechar="'")
-    with open(column_file, 'r') as csvfile:
-        date_time_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        for row in date_time_reader:
-            try:
-                date_time = dt.datetime.strptime(row[0].strip(), in_format)
-                quoted_dt = "\"{0}\"".format(date_time.strftime(gtnp_date_time_format))
-                date_time_writer.writerow([quoted_dt])
-            except ValueError as error:
-                print error
-                date_time_writer.writerow(row)
+    sorted_writer = csv.writer(open(out_file, 'w'), quotechar="'", lineterminator='\n')
+    header_row = None
+    sorted_data = []
+    with open(in_file, 'rb') as csvfile:
+        unsorted_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+        csv_data = []
+        ind = 0
+        for row in unsorted_reader:
+            if ind > 0:
+                typed_row = create_typed_row(row, column_list)
+                csv_data.append(typed_row)
+            else:
+                header_row = row
+            ind += 1
+        for index, type in reversed(column_list):
+            sorted_data = sorted(csv_data, key=lambda sort_by: sort_by[index])
+
+    sorted_writer.writerow(header_row)
+    for sorted_row in sorted_data:
+        if date_time_index:
+            row_list = list(sorted_row)
+            row_list[date_time_index] = row_list[date_time_index].strftime(gtnp_date_time_format)
+            sorted_row = tuple(row_list)
+        sorted_writer.writerow(sorted_row)
 
 def parse_arguments(argv):
     """ Parse the command line arguments and return them. """
-    date_time_column_file = None
-    out_column_file = None
-    date_time_format = None
+    in_file = None
+    out_file = None
+    column_list = None
     try:
-        opts, args = getopt.getopt(argv,"hi:o:f:",["date_time_column_file=","out_column_file=","date_time_format="])
+        opts, args = getopt.getopt(argv,"hi:o:l:",["in_file=","out_file=","column_list="])
     except getopt.GetoptError:
-        print 'reformat_dates_to_gtnp.py -i <Date time column file> -o <CSV output file> -f <date/time format>'
+        print 'sort_by_columns.py -i <CSV input file> -o <CSV output file> -l <list of columns to sort by>'
         sys.exit(2)
 
     found_in_file = False
     found_out_file = False
-    found_date_time = False
+    found_column_list = False
     for opt, arg in opts:
         if opt == '-h':
-            print 'reformat_dates_to_gtnp.py -i <Date time column file> -o <CSV output file> -f <date/time format>'
+            print 'sort_by_columns.py -i <CSV input file> -o <CSV output file> -l <list of columns to sort by>'
             sys.exit()
-        elif opt in ("-i", "--date_time_column_file"):
+        elif opt in ("-i", "--in_file"):
             found_in_file = True
-            date_time_column_file = arg
-        elif opt in ("-o", "--out_column_file"):
+            in_file = arg
+        elif opt in ("-o", "--out_file"):
             found_out_file = True
-            out_column_file = arg
-        elif opt in ("-f", "--date_time_format"):
-            found_date_time = True
-            date_time_format = arg
+            out_file = arg
+        elif opt in ("-l", "--column_list"):
+            found_column_list = True
+            column_list = ast.literal_eval(arg)
     if not found_in_file:
         print "Input file '-i' argument required."
         sys.exit(2)
     if not found_out_file:
         print "Output file '-o' argument required."
         sys.exit(2)
-    if not found_date_time:
-        print "Input date/time format '-f' argument required."
+    if not found_column_list:
+        print "Ordered list of columns to sort by '-l' argument required."
         sys.exit(2)
-    return (date_time_column_file, out_column_file, date_time_format)
+    return in_file, out_file, column_list
 
 if __name__ == '__main__':
-    (date_time_column_file, out_column_file, date_time_format) = parse_arguments(sys.argv[1:])
+    (in_file, out_file, column_list) = parse_arguments(sys.argv[1:])
 
-    reformat_dates_to_gtnp(column_file=date_time_column_file, out_file=out_column_file, in_format=date_time_format)
+    sort_by_columns(in_file, out_file, column_list)
