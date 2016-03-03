@@ -10,6 +10,11 @@ gtnp_date_time_format = '%Y-%m-%d %H:%M'
 date_time_index = None
 
 def cast_to_datetime(dt_str):
+    """
+    Convert string to a datetime object.
+    :param int_str: string to convert to a datetime object
+    :return: datetime object
+    """
     date_time = None
     try:
         date_time = dt.datetime.strptime(dt_str.strip(), gtnp_date_time_format)
@@ -18,12 +23,29 @@ def cast_to_datetime(dt_str):
     return date_time
 
 def cast_to_integer(int_str):
+    """
+    Convert string to an integer.
+    :param int_str: string to convert to an integer
+    :return: integer number
+    """
     return int(float(int_str.strip()))
 
 def cast_to_real(real_str):
+    """
+    Convert string to a real.
+    :param real_str: string to convert to a real
+    :return: real number
+    """
     return float(real_str.strip())
 
 def create_typed_row(row, column_list):
+    """
+    Make sure rows to be sorted by are in sortable form.
+    :param row: CSV row
+    :param column_list: list of sort by column tuples (index, type)
+    :return: a row of typed values
+    """
+    global date_time_index
     row_list = list(row)
     for index, type in column_list:
         if type == 'dt':
@@ -37,16 +59,16 @@ def create_typed_row(row, column_list):
 
 def sort_by_columns(in_file, out_file, column_list):
     """
-    Reformat the date/times.
-    :param column_file: file containing date/time column
-    :param out_file: CSV filename for reformatted date/times
-    :param in_format: python strptime format string of date/times in column_file
+    Takes a list of columns to sort by in ascending order.
+    :param in_file: CSV file to sort
+    :param out_file: sorted CSV file
+    :param column_list: list of tuples (index, type) describing sort columns
     """
-    sorted_writer = csv.writer(open(out_file, 'w'), quotechar="'", lineterminator='\n')
+    sorted_writer = csv.writer(open(out_file, 'w'), quotechar='"', quoting=csv.QUOTE_NONNUMERIC, lineterminator='\n')
     header_row = None
     sorted_data = []
     with open(in_file, 'rb') as csvfile:
-        unsorted_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+        unsorted_reader = csv.reader(csvfile, delimiter=',')
         csv_data = []
         ind = 0
         for row in unsorted_reader:

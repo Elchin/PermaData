@@ -51,7 +51,7 @@ def pull_data(raw_file, out_file):
     ifile = codecs.open(raw_file, 'r', encoding='utf_16_le')
     print 'out file = ', out_file
     ofile = open(out_file, 'w')
-    writer = csv.writer(ofile, delimiter=',', quotechar="'")
+    writer = csv.writer(ofile, delimiter=',', quotechar="'", lineterminator='\n')
 
     for row in ifile:
         data_row = parse_row(row)
