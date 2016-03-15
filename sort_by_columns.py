@@ -20,6 +20,7 @@ def cast_to_datetime(dt_str):
         date_time = dt.datetime.strptime(dt_str, gtnp_date_time_format)
     except ValueError as error:
         print error
+        print 'Column cannot be converted to date/time. Sorting will be by string.'
     return date_time
 
 def cast_to_integer(int_str):
@@ -28,7 +29,10 @@ def cast_to_integer(int_str):
     :param int_str: string to convert to an integer
     :return: integer number
     """
-    return int(float(int_str))
+    try:
+        return int(float(int_str))
+    except ValueError:
+        return int_str
 
 def cast_to_real(real_str):
     """
@@ -36,7 +40,10 @@ def cast_to_real(real_str):
     :param real_str: string to convert to a real
     :return: real number
     """
-    return float(real_str)
+    try:
+        return float(real_str)
+    except ValueError:
+        return real_str
 
 def create_typed_row(row, column_list):
     """
@@ -72,7 +79,7 @@ def sort_by_columns(in_file, out_file, column_list):
         csv_data = []
         ind = 0
         for row in unsorted_reader:
-            row = [col_val.strip() for col_val in row]
+            row = [cast_to_real(col_val.strip()) for col_val in row]
             if ind > 0:
                 typed_row = create_typed_row(row, column_list)
                 csv_data.append(typed_row)
