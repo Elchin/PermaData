@@ -13,13 +13,13 @@ def parse_substation_code(row):
     """ Extract substation code from data row. """
     substation_regex = re.compile(r'\d{4,5}')
     data_code = substation_regex.search(row)
-    return '\"' + row[data_code.end():data_code.end() + 7] + '\"'
+    return '\'' + row[data_code.end():data_code.end() + 7] + '\''
 
 def parse_date_and_time(row):
     """ Extract date/time field from data row. """
     datetime_regex = re.compile(r'\d{8}T\d{4}')
     date_and_time = datetime_regex.search(row)
-    return '\"' + date_and_time.group() + '\"'
+    return '\'' + date_and_time.group() + '\''
 
 def parse_depth(row):
     """ Extract depth field from data row. """
@@ -47,11 +47,9 @@ def parse_row(row):
 
 def pull_data(raw_file, out_file):
     """ Pull data fields out of raw data file. """
-    print 'raw file = ', raw_file
     ifile = codecs.open(raw_file, 'r', encoding='utf_16_le')
-    print 'out file = ', out_file
     ofile = open(out_file, 'w')
-    writer = csv.writer(ofile, delimiter=',', quotechar="'", lineterminator='\n')
+    writer = csv.writer(ofile, delimiter=',', quoting=csv.QUOTE_NONE, lineterminator='\n')
 
     for row in ifile:
         data_row = parse_row(row)
