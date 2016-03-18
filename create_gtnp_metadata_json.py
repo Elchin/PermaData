@@ -30,9 +30,11 @@ def traverse(obj, path=None, callback=None):
         path = []
 
     if isinstance(obj, dict):
-        value = {k: traverse(v, path + [k], callback) for k, v in obj.items()}
+        value = dict((k, traverse(v, path + [k], callback))
+                    for k, v in obj.items())
     elif isinstance(obj, list):
-        value = [traverse(elem, path + [idx], callback) for idx, elem in enumerate(obj)]
+        value = [traverse(elem, path + [idx], callback)
+                    for idx, elem in enumerate(obj)]
     else:
         value = obj
 
@@ -41,15 +43,18 @@ def traverse(obj, path=None, callback=None):
     else:
         return callback(path, value)
 
+def strip_whitespace(entry):
+    return entry.strip()
+
 def replace_metadata_values(json_data, replace_fields, csv_data):
     borehole_list = []
     for row in csv_data:
         borehole = {}
-        split_field = [field.split(':') for field in replace_fields]
+        split_fields = [map(strip_whitespace, field.split(':')) for field in replace_fields]
         def transformer(path, value):
-            if path in split_field:
-                replacement_value = row[split_field.index(path)]
-                return replacement_value
+            if path in split_fields:
+                replacement_value = row[split_fields.index(path)]
+                return replacement_value.split()
             else:
                 return value
         borehole = traverse(json_data, callback=transformer)
