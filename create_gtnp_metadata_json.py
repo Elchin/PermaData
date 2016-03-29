@@ -37,7 +37,7 @@ def traverse(obj, path=None, callback=None):
             value = [traverse(elem, path + [idx], callback)
                      for idx, elem in enumerate(obj)]
         else:
-            value = [traverse(None, path + [0], callback)]
+            value = [traverse('', path + [0], callback)]
     else:
         value = obj
 
@@ -61,8 +61,14 @@ def replace_metadata_values(json_data, replace_fields, csv_data):
         split_fields = [map(process_column_name, field.split(':')) for field in replace_fields]
         def transformer(path, value):
             if path in split_fields:
-                replacement_value = row[split_fields.index(path)]
-                return replacement_value.strip()
+                try:
+                    replacement_value = row[split_fields.index(path)]
+                    if replacement_value:
+                        return replacement_value.strip()
+                    else:
+                        return value
+                except IndexError:
+                    return value
             else:
                 return value
         borehole = traverse(json_data, callback=transformer)
