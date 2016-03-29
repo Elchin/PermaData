@@ -1,7 +1,6 @@
 import csv
 import json
 import getopt
-from collections import OrderedDict
 import sys
 
 def read_metadata_csv(csv_overrides):
@@ -22,7 +21,7 @@ def read_metadata_csv(csv_overrides):
 def read_json_template(json_template):
     data = None
     with open(json_template) as data_file:
-        data = json.load(data_file, object_pairs_hook=OrderedDict)
+        data = json.load(data_file)
     return data
 
 def traverse(obj, path=None, callback=None):
@@ -33,8 +32,12 @@ def traverse(obj, path=None, callback=None):
         value = dict((k, traverse(v, path + [k], callback))
                     for k, v in obj.items())
     elif isinstance(obj, list):
-        value = [traverse(elem, path + [idx], callback)
-                    for idx, elem in enumerate(obj)]
+        value = obj
+        if obj:
+            value = [traverse(elem, path + [idx], callback)
+                     for idx, elem in enumerate(obj)]
+        else:
+            value = [traverse(None, path + [0], callback)]
     else:
         value = obj
 
@@ -43,18 +46,23 @@ def traverse(obj, path=None, callback=None):
     else:
         return callback(path, value)
 
-def strip_whitespace(entry):
-    return entry.strip()
+def process_column_name(entry):
+    column_name = entry.strip()
+    try:
+        column_name = int(column_name)
+    except ValueError:
+        pass
+    return column_name
 
 def replace_metadata_values(json_data, replace_fields, csv_data):
     borehole_list = []
     for row in csv_data:
         borehole = {}
-        split_fields = [map(strip_whitespace, field.split(':')) for field in replace_fields]
+        split_fields = [map(process_column_name, field.split(':')) for field in replace_fields]
         def transformer(path, value):
             if path in split_fields:
                 replacement_value = row[split_fields.index(path)]
-                return replacement_value.split()
+                return replacement_value.strip()
             else:
                 return value
         borehole = traverse(json_data, callback=transformer)
