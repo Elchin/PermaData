@@ -17,9 +17,10 @@ def cast_to_datetime(dt_str):
     """
     date_time = None
     try:
-        date_time = dt.datetime.strptime(dt_str.strip(), gtnp_date_time_format)
+        date_time = dt.datetime.strptime(dt_str, gtnp_date_time_format)
     except ValueError as error:
         print error
+        print 'Column cannot be converted to date/time. Sorting will be by string.'
     return date_time
 
 def cast_to_integer(int_str):
@@ -28,7 +29,10 @@ def cast_to_integer(int_str):
     :param int_str: string to convert to an integer
     :return: integer number
     """
-    return int(float(int_str.strip()))
+    try:
+        return int(float(int_str))
+    except ValueError:
+        return int_str
 
 def cast_to_real(real_str):
     """
@@ -36,7 +40,10 @@ def cast_to_real(real_str):
     :param real_str: string to convert to a real
     :return: real number
     """
-    return float(real_str.strip())
+    try:
+        return float(real_str)
+    except ValueError:
+        return real_str
 
 def create_typed_row(row, column_list):
     """
@@ -51,7 +58,7 @@ def create_typed_row(row, column_list):
         if type == 'dt':
             date_time_index = index
             row_list[index] = cast_to_datetime(row_list[index])
-        elif type == 'int':
+        elif type == 'integer':
             row_list[index] = cast_to_integer(row_list[index])
         elif type == 'real':
             row_list[index] = cast_to_real(row_list[index])
@@ -64,7 +71,7 @@ def sort_by_columns(in_file, out_file, column_list):
     :param out_file: sorted CSV file
     :param column_list: list of tuples (index, type) describing sort columns
     """
-    sorted_writer = csv.writer(open(out_file, 'w'), quotechar='"', quoting=csv.QUOTE_NONNUMERIC, lineterminator='\n')
+    sorted_writer = csv.writer(open(out_file, 'w'), quotechar="'", quoting=csv.QUOTE_NONNUMERIC, lineterminator='\n')
     header_row = None
     sorted_data = []
     with open(in_file, 'rb') as csvfile:
@@ -72,6 +79,7 @@ def sort_by_columns(in_file, out_file, column_list):
         csv_data = []
         ind = 0
         for row in unsorted_reader:
+            row = [cast_to_real(col_val.strip()) for col_val in row]
             if ind > 0:
                 typed_row = create_typed_row(row, column_list)
                 csv_data.append(typed_row)
