@@ -1,9 +1,18 @@
+""" Creates list of boreholes in GTNP JSON format using the template file and
+    values in each row in the csv file. """
+
 import csv
 import json
 import getopt
 import sys
 
 def read_metadata_csv(csv_overrides):
+    """
+    Read in the CSV file with dynamic metadata content in each row.
+    :param csv_overrides: File containing dynamic metadata content.
+    :return field_names: list of column names
+    :return csv_data: rows of dynamic metadata
+    """
     csv_data = []
     field_names = None
     is_header = True
@@ -19,12 +28,24 @@ def read_metadata_csv(csv_overrides):
     return field_names, csv_data
 
 def read_json_template(json_template):
+    """
+    Read in JSON template to use for a site/borehole entry.
+    :param json_template: file name of JSON template
+    :return data: JSON data structure from JSON template
+    """
     data = None
     with open(json_template) as data_file:
         data = json.load(data_file)
     return data
 
 def traverse(obj, path=None, callback=None):
+    """
+    Visit all the fields in JSON structure and run callback on every value.
+    :param obj: JSON structure
+    :param path: list of namespace elements to describe field
+    :param callback: function to do something with values
+    :return value: stopping value of recursion or recurse to next level
+    """
     if path is None:
         path = []
 
@@ -47,6 +68,11 @@ def traverse(obj, path=None, callback=None):
         return callback(path, value)
 
 def process_column_name(entry):
+    """
+    Strip extra whitespace from column names and cast integers to numbers.
+    :param entry: column name to clean
+    :return column_name: cleaned up column name
+    """
     column_name = entry.strip()
     try:
         column_name = int(column_name)
@@ -55,6 +81,13 @@ def process_column_name(entry):
     return column_name
 
 def replace_metadata_values(json_data, replace_fields, csv_data):
+    """
+    Coordinates production of final borehole JSON list.
+    :param json_data: individual borehole/site JSON data structure template
+    :param replace_fields: list of JSON fields to replace
+    :param csv_data: rows (one row per borehole/site) of metadata values
+    :return: complete list of populated borehole/site metadata entries
+    """
     borehole_list = []
     for row in csv_data:
         borehole = {}
@@ -76,6 +109,11 @@ def replace_metadata_values(json_data, replace_fields, csv_data):
     return {'Boreholes':borehole_list}
 
 def create_gtnp_metadata_json(json_template, csv_overrides, out_file):
+    """
+    :param json_template: JSON template file name
+    :param csv_overrides: borehole/site metadata values CSV file name
+    :param out_file: file to create with complete JSON metadata dump
+    """
     json_metadata = None
     try:
         json_metadata = read_json_template(json_template)
@@ -85,8 +123,6 @@ def create_gtnp_metadata_json(json_template, csv_overrides, out_file):
             json.dump(borehole_dict, json_file, indent=3)
     except ValueError as valError:
         print valError
-
-    return None
 
 def parse_arguments(argv):
     """ Parse the command line arguments and return them. """
