@@ -6,7 +6,9 @@ import datetime as dt
 import getopt
 import sys
 
-gtnp_date_time_format = '%Y-%m-%d %H:%M'
+gtnp_date_time_format1 = '%Y-%m-%d %H:%M'
+gtnp_date_time_format2 = '%Y-%m-%d %H:%M:%S'
+gtnp_date_time_format = gtnp_date_time_format1
 date_time_index = None
 
 def cast_to_datetime(dt_str):
@@ -16,11 +18,17 @@ def cast_to_datetime(dt_str):
     :return: datetime object
     """
     date_time = None
+    dt_str = dt_str.strip()
     try:
+        gtnp_date_time_format = gtnp_date_time_format1
         date_time = dt.datetime.strptime(dt_str, gtnp_date_time_format)
     except ValueError as error:
-        print error
-        print 'Column cannot be converted to date/time. Sorting will be by string.'
+        try:
+            gtnp_date_time_format = gtnp_date_time_format2
+            date_time = dt.datetime.strptime(dt_str, gtnp_date_time_format)
+        except ValueError as error:
+            print '"', error, '"'
+            print 'Column cannot be converted to date/time. Sorting will be by string.'
     return date_time
 
 def cast_to_integer(int_str):
