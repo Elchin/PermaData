@@ -99,7 +99,7 @@ def sort_by_columns(in_file, out_file, column_list):
 
     sorted_writer.writerow(header_row)
     for sorted_row in sorted_data:
-        if date_time_index:
+        if date_time_index is not None:
             row_list = list(sorted_row)
             row_list[date_time_index] = row_list[date_time_index].strftime(gtnp_date_time_format)
             sorted_row = tuple(row_list)
