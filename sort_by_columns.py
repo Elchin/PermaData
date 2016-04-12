@@ -53,6 +53,23 @@ def cast_to_real(real_str):
     except ValueError:
         return real_str
 
+def cast_data_value(col_str):
+    """
+    Cast strings to integers or reals before writing them to the file to avoid
+    quoting numerics.
+    :param col_str: data string value to possible cast
+    :return: an integer, real, or string
+    """
+    try:
+        return int(col_str)
+    except ValueError:
+        pass
+    try:
+        return float(col_str)
+    except ValueError:
+        pass
+    return col_str
+
 def create_typed_row(row, column_list):
     """
     Make sure rows to be sorted by are in sortable form.
@@ -87,15 +104,16 @@ def sort_by_columns(in_file, out_file, column_list):
         csv_data = []
         ind = 0
         for row in unsorted_reader:
-            row = [cast_to_real(col_val.strip()) for col_val in row]
+            row = [cast_data_value(col_val.strip()) for col_val in row]
             if ind > 0:
                 typed_row = create_typed_row(row, column_list)
                 csv_data.append(typed_row)
             else:
                 header_row = row
             ind += 1
+        sorted_data = csv_data
         for index, type in reversed(column_list):
-            sorted_data = sorted(csv_data, key=lambda sort_by: sort_by[index])
+            sorted_data = sorted(sorted_data, key=lambda sort_by: sort_by[index])
 
     sorted_writer.writerow(header_row)
     for sorted_row in sorted_data:
