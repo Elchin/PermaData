@@ -3,11 +3,11 @@
 import codecs
 import csv
 import getopt
+import io
 import re
 import sys
 
-depths_seen = []
-data_rows = [('Station', 'date:time', 'Depth', 'Temperature')]
+data_rows = [['\'Station\'', '\'date:time\'', '\'Depth\'', '\'Quality Code\'', '\'Temperature\'']]
 
 def parse_substation_code(row):
     """ Extract substation code from data row. """
@@ -23,13 +23,12 @@ def parse_date_and_time(row):
 
 def parse_depth(row):
     """ Extract depth field from data row. """
-    depth_regex = re.compile(r'\d+_CM')
-    depth = depth_regex.search(row)
-    if depth:
-        depth = depth.group().replace('_CM', '.0')
-        if depth not in depths_seen:
-            depths_seen.append(depth)
-    return depth
+    depth = row[44:64].strip()
+    return '\'' + depth + '\''
+
+def parse_quality_code(row):
+    qc = row[64:65].strip()
+    return '\'' + qc + '\''
 
 def parse_value(row):
     """ Extract temperature field from data row. """
@@ -42,25 +41,27 @@ def parse_row(row):
     station_id = parse_substation_code(row)
     date_and_time = parse_date_and_time(row)
     depth = parse_depth(row)
+    quality_code = parse_quality_code(row)
     value = parse_value(row)
-    return [station_id, date_and_time, depth, value]
+    return [station_id, date_and_time, depth, quality_code, value]
 
 def pull_data(raw_file, out_file):
     """ Pull data fields out of raw data file. """
     ifile = codecs.open(raw_file, 'r', encoding='utf_16_le')
     ofile = open(out_file, 'w')
     writer = csv.writer(ofile, delimiter=',', quoting=csv.QUOTE_NONE, lineterminator='\n')
+    print "Processing: ", raw_file
 
+    is_header = True
     for row in ifile:
-        data_row = parse_row(row)
-        data_rows.append(data_row)
+        data_row = row
+        if not is_header:
+            data_row = parse_row(row)
+            data_rows.append(data_row)
+        else:
+            is_header = False
 
     for a_row in data_rows:
-        if not a_row[2]:
-            replacement_depth = -999.0
-            if len(depths_seen) is 1:
-                replacement_depth = depths_seen[0]
-            a_row = (a_row[0], a_row[1], replacement_depth, a_row[3])
         writer.writerow(a_row)
 
     ifile.close()
@@ -99,6 +100,7 @@ def parse_arguments(argv):
 
 if __name__ == '__main__':
     (ggd361_raw_file, ggd361_data_file) = parse_arguments(sys.argv[1:])
+
 
     pull_data(raw_file=ggd361_raw_file,
               out_file=ggd361_data_file)
