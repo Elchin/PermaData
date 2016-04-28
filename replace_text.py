@@ -33,7 +33,7 @@ def replace_text(ggd361_csv, out_file, column, to_replace, with_replace):
             else:
                 field = row[col_ind].replace('\'', '')
                 new_field = field.replace(to_replace, with_replace)
-                row[col_ind] = new_field
+                row[col_ind] = '\'' + new_field + '\''
 
             writer.writerow(row)
     ofile.close()
