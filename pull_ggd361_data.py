@@ -23,11 +23,11 @@ def parse_date_and_time(row):
 
 def parse_depth(row):
     """ Extract depth field from data row. """
-    depth = row[44:64].strip()
+    depth = row[43:63].strip()
     return '\'' + depth + '\''
 
 def parse_quality_code(row):
-    qc = row[64:65].strip()
+    qc = row[63:65].strip()
     return '\'' + qc + '\''
 
 def parse_value(row):
@@ -50,7 +50,7 @@ def pull_data(raw_file, out_file):
     ifile = codecs.open(raw_file, 'r', encoding='utf_16_le')
     ofile = open(out_file, 'w')
     writer = csv.writer(ofile, delimiter=',', quoting=csv.QUOTE_NONE, lineterminator='\n')
-    print "Processing: ", raw_file
+    # print "Processing: ", raw_file
 
     is_header = True
     for row in ifile:
