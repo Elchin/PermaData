@@ -6,7 +6,9 @@ import datetime as dt
 import getopt
 import sys
 
-gtnp_date_time_format = '%Y-%m-%d %H:%M'
+gtnp_date_time_format1 = '%Y-%m-%d %H:%M'
+gtnp_date_time_format2 = '%Y-%m-%d %H:%M:%S'
+gtnp_date_time_format = gtnp_date_time_format1
 date_time_index = None
 
 def cast_to_datetime(dt_str):
@@ -16,11 +18,17 @@ def cast_to_datetime(dt_str):
     :return: datetime object
     """
     date_time = None
+    dt_str = dt_str.strip()
     try:
+        gtnp_date_time_format = gtnp_date_time_format1
         date_time = dt.datetime.strptime(dt_str, gtnp_date_time_format)
     except ValueError as error:
-        print error
-        print 'Column cannot be converted to date/time. Sorting will be by string.'
+        try:
+            gtnp_date_time_format = gtnp_date_time_format2
+            date_time = dt.datetime.strptime(dt_str, gtnp_date_time_format)
+        except ValueError as error:
+            print '"', error, '"'
+            print 'Column cannot be converted to date/time. Sorting will be by string.'
     return date_time
 
 def cast_to_integer(int_str):
@@ -44,6 +52,23 @@ def cast_to_real(real_str):
         return float(real_str)
     except ValueError:
         return real_str
+
+def cast_data_value(col_str):
+    """
+    Cast strings to integers or reals before writing them to the file to avoid
+    quoting numerics.
+    :param col_str: data string value to possible cast
+    :return: an integer, real, or string
+    """
+    try:
+        return int(col_str)
+    except ValueError:
+        pass
+    try:
+        return float(col_str)
+    except ValueError:
+        pass
+    return col_str
 
 def create_typed_row(row, column_list):
     """
@@ -79,19 +104,20 @@ def sort_by_columns(in_file, out_file, column_list):
         csv_data = []
         ind = 0
         for row in unsorted_reader:
-            row = [cast_to_real(col_val.strip()) for col_val in row]
+            row = [cast_data_value(col_val.strip()) for col_val in row]
             if ind > 0:
                 typed_row = create_typed_row(row, column_list)
                 csv_data.append(typed_row)
             else:
                 header_row = row
             ind += 1
+        sorted_data = csv_data
         for index, type in reversed(column_list):
-            sorted_data = sorted(csv_data, key=lambda sort_by: sort_by[index])
+            sorted_data = sorted(sorted_data, key=lambda sort_by: sort_by[index])
 
     sorted_writer.writerow(header_row)
     for sorted_row in sorted_data:
-        if date_time_index:
+        if date_time_index is not None:
             row_list = list(sorted_row)
             row_list[date_time_index] = row_list[date_time_index].strftime(gtnp_date_time_format)
             sorted_row = tuple(row_list)
